@@ -160,3 +160,26 @@ def test_strategies_rank_the_same_profile_differently():
     energy_top = recommend_songs(prefs, songs, k=1, strategy=STRATEGIES["energy-focused"])[0][0]
     assert genre_top["genre"] == "blues"
     assert energy_top["energy"] > 0.9
+
+
+# ---- Diversity penalty ----
+
+LOFI_FAN = {"genre": "lofi", "mood": "chill", "energy": 0.35, "likes_acoustic": True}
+
+
+def test_diversity_limits_repeated_artists_and_genres():
+    songs = load_songs("data/songs.csv")
+    plain = recommend_songs(LOFI_FAN, songs, k=5)
+    diverse = recommend_songs(LOFI_FAN, songs, k=5, diversity=True)
+
+    def lofi_count(results):
+        return sum(1 for song, _, _ in results if song["genre"] == "lofi")
+
+    assert lofi_count(diverse) < lofi_count(plain)
+    assert diverse[0][0]["title"] == plain[0][0]["title"]  # the best match stays first
+
+
+def test_diversity_explains_the_penalty():
+    songs = load_songs("data/songs.csv")
+    diverse = recommend_songs(LOFI_FAN, songs, k=5, diversity=True)
+    assert any("repeat genre" in explanation for _, _, explanation in diverse)

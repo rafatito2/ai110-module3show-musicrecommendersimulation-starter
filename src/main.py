@@ -6,6 +6,7 @@ Run it from the project root with:
     python -m src.main                 # all profiles
     python -m src.main --experiment    # weight-shift experiment
     python -m src.main --mode mood-first
+    python -m src.main --diverse       # penalize repeated artists and genres
 """
 
 import argparse
@@ -65,6 +66,10 @@ def main() -> None:
         "--mode", choices=list(STRATEGIES), default="balanced",
         help="ranking strategy to use",
     )
+    parser.add_argument(
+        "--diverse", action="store_true",
+        help="apply the diversity penalty for repeated artists and genres",
+    )
     args = parser.parse_args()
 
     songs = load_songs("data/songs.csv")
@@ -76,9 +81,10 @@ def main() -> None:
 
     strategy = STRATEGIES[args.mode]
     print(f"Ranking mode: {strategy.name} ({strategy.description})")
+    print(f"Diversity penalty: {'on' if args.diverse else 'off'}")
 
     for name, prefs in PROFILES.items():
-        results = recommend_songs(prefs, songs, args.k, strategy=strategy)
+        results = recommend_songs(prefs, songs, args.k, strategy=strategy, diversity=args.diverse)
         print_recommendations(name, prefs, results)
 
 

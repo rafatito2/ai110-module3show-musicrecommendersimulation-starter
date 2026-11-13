@@ -238,6 +238,7 @@ def recommend_songs(
     k: int = 5,
     weights: Optional[Dict[str, float]] = None,
     strategy: Optional[ScoringStrategy] = None,
+    diversity: bool = False,
 ) -> List[Tuple[Dict, float, str]]:
     """Scores every song, sorts from highest to lowest and returns the top k with explanations."""
     scored = []
@@ -248,4 +249,35 @@ def recommend_songs(
             score, reasons = score_song(user_prefs, song, weights)
         scored.append((song, score, "; ".join(reasons)))
     # sorted() returns a new list and leaves the catalog order untouched.
-    return sorted(scored, key=lambda item: item[1], reverse=True)[:k]
+    ranked = sorted(scored, key=lambda item: item[1], reverse=True)
+    return diversify(ranked, k) if diversity else ranked[:k]
+
+
+ARTIST_PENALTY = 1.5
+GENRE_PENALTY = 0.75
+
+
+def diversify(ranked: List[Tuple[Dict, float, str]], k: int) -> List[Tuple[Dict, float, str]]:
+    """Picks the top k one at a time, lowering a song's score for each repeat of an artist or genre already picked."""
+    remaining = list(ranked)
+    picked: List[Tuple[Dict, float, str]] = []
+
+    def penalty(song: Dict) -> Tuple[float, List[str]]:
+        notes = []
+        artist_repeats = sum(1 for chosen, _, _ in picked if chosen["artist"] == song["artist"])
+        genre_repeats = sum(1 for chosen, _, _ in picked if chosen["genre"] == song["genre"])
+        if artist_repeats:
+            notes.append(f"repeat artist (-{ARTIST_PENALTY * artist_repeats:.2f})")
+        if genre_repeats:
+            notes.append(f"repeat genre (-{GENRE_PENALTY * genre_repeats:.2f})")
+        return ARTIST_PENALTY * artist_repeats + GENRE_PENALTY * genre_repeats, notes
+
+    while remaining and len(picked) < k:
+        best = max(remaining, key=lambda item: item[1] - penalty(item[0])[0])
+        remaining.remove(best)
+        song, score, explanation = best
+        cost, notes = penalty(song)
+        if notes:
+            explanation = "; ".join([explanation] + notes)
+        picked.append((song, round(score - cost, 2), explanation))
+    return picked
