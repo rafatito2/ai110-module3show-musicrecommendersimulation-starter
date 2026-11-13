@@ -139,3 +139,24 @@ def test_shared_mood_tags_and_decade_add_points():
     prefs = {**POP_FAN, "mood_tags": ["warm", "nostalgic"], "favorite_decade": 1990}
     score, _ = score_song(prefs, make_song(mood_tags=["warm", "nostalgic"], release_decade=1990))
     assert score == 4.5 + 1.0 + 0.5
+
+
+# ---- Ranking strategies ----
+
+from src.recommender import STRATEGIES
+
+
+def test_balanced_strategy_matches_default_scoring():
+    songs = load_songs("data/songs.csv")
+    assert recommend_songs(POP_FAN, songs) == recommend_songs(
+        POP_FAN, songs, strategy=STRATEGIES["balanced"]
+    )
+
+
+def test_strategies_rank_the_same_profile_differently():
+    songs = load_songs("data/songs.csv")
+    prefs = {"genre": "blues", "mood": "sad", "energy": 0.95}
+    genre_top = recommend_songs(prefs, songs, k=1, strategy=STRATEGIES["genre-first"])[0][0]
+    energy_top = recommend_songs(prefs, songs, k=1, strategy=STRATEGIES["energy-focused"])[0][0]
+    assert genre_top["genre"] == "blues"
+    assert energy_top["energy"] > 0.9

@@ -5,11 +5,12 @@ Run it from the project root with:
 
     python -m src.main                 # all profiles
     python -m src.main --experiment    # weight-shift experiment
+    python -m src.main --mode mood-first
 """
 
 import argparse
 
-from src.recommender import load_songs, recommend_songs
+from src.recommender import STRATEGIES, load_songs, recommend_songs
 
 # Three everyday listeners plus two profiles built to trick the scoring.
 PROFILES = {
@@ -60,6 +61,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Music Recommender Simulation")
     parser.add_argument("-k", type=int, default=5, help="how many songs to recommend")
     parser.add_argument("--experiment", action="store_true", help="run the weight-shift experiment")
+    parser.add_argument(
+        "--mode", choices=list(STRATEGIES), default="balanced",
+        help="ranking strategy to use",
+    )
     args = parser.parse_args()
 
     songs = load_songs("data/songs.csv")
@@ -69,8 +74,12 @@ def main() -> None:
         run_experiment(songs, args.k)
         return
 
+    strategy = STRATEGIES[args.mode]
+    print(f"Ranking mode: {strategy.name} ({strategy.description})")
+
     for name, prefs in PROFILES.items():
-        print_recommendations(name, prefs, recommend_songs(prefs, songs, args.k))
+        results = recommend_songs(prefs, songs, args.k, strategy=strategy)
+        print_recommendations(name, prefs, results)
 
 
 if __name__ == "__main__":

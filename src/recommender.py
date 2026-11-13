@@ -194,16 +194,58 @@ def _score_advanced(user_prefs: Dict, song: Dict, w: Dict[str, float], reasons: 
     return points
 
 
+class ScoringStrategy:
+    """Base ranking strategy: scores a song with its own set of weights."""
+    name = "balanced"
+    description = "Recipe from the README: genre 2.0, mood 1.0, energy 1.5"
+    weights: Dict[str, float] = {}
+
+    def score(self, user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
+        """Scores one song using this strategy's weights."""
+        return score_song(user_prefs, song, self.weights)
+
+
+class GenreFirst(ScoringStrategy):
+    """Stays inside the favorite genre almost no matter what."""
+    name = "genre-first"
+    description = "Genre 3.5, mood 0.5, energy 1.0"
+    weights = {"genre": 3.5, "mood": 0.5, "energy": 1.0}
+
+
+class MoodFirst(ScoringStrategy):
+    """Follows the mood across genres."""
+    name = "mood-first"
+    description = "Mood 3.0, genre 0.75, mood tags 1.0 each"
+    weights = {"genre": 0.75, "mood": 3.0, "mood_tag": 1.0}
+
+
+class EnergyFocused(ScoringStrategy):
+    """Matches intensity and mostly ignores labels."""
+    name = "energy-focused"
+    description = "Energy 4.0, genre 0.5, mood 0.5"
+    weights = {"genre": 0.5, "mood": 0.5, "energy": 4.0}
+
+
+STRATEGIES: Dict[str, ScoringStrategy] = {
+    strategy.name: strategy
+    for strategy in (ScoringStrategy(), GenreFirst(), MoodFirst(), EnergyFocused())
+}
+
+
 def recommend_songs(
     user_prefs: Dict,
     songs: List[Dict],
     k: int = 5,
     weights: Optional[Dict[str, float]] = None,
+    strategy: Optional[ScoringStrategy] = None,
 ) -> List[Tuple[Dict, float, str]]:
     """Scores every song, sorts from highest to lowest and returns the top k with explanations."""
     scored = []
     for song in songs:
-        score, reasons = score_song(user_prefs, song, weights)
+        if strategy is not None:
+            score, reasons = strategy.score(user_prefs, song)
+        else:
+            score, reasons = score_song(user_prefs, song, weights)
         scored.append((song, score, "; ".join(reasons)))
     # sorted() returns a new list and leaves the catalog order untouched.
     return sorted(scored, key=lambda item: item[1], reverse=True)[:k]
