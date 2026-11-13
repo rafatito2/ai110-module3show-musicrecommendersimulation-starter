@@ -59,3 +59,61 @@ def test_explain_recommendation_returns_non_empty_string():
     explanation = rec.explain_recommendation(user, song)
     assert isinstance(explanation, str)
     assert explanation.strip() != ""
+
+
+# ---- Tests for the functional API used by src/main.py ----
+
+from src.recommender import load_songs, recommend_songs, score_song
+
+POP_FAN = {"genre": "pop", "mood": "happy", "energy": 0.8}
+
+
+def make_song(**overrides) -> dict:
+    song = {
+        "id": 1, "title": "T", "artist": "A", "genre": "pop", "mood": "happy",
+        "energy": 0.8, "tempo_bpm": 120.0, "valence": 0.8,
+        "danceability": 0.8, "acousticness": 0.2,
+    }
+    song.update(overrides)
+    return song
+
+
+def test_load_songs_reads_catalog_and_converts_numbers():
+    songs = load_songs("data/songs.csv")
+    assert len(songs) >= 15
+    assert isinstance(songs[0]["energy"], float)
+    assert isinstance(songs[0]["id"], int)
+
+
+def test_perfect_match_gets_full_points_and_reasons():
+    score, reasons = score_song(POP_FAN, make_song())
+    assert score == 4.5  # 2.0 genre + 1.0 mood + 1.5 energy
+    assert len(reasons) == 3
+    assert any("genre match" in r for r in reasons)
+
+
+def test_energy_rewards_closeness_not_size():
+    close, _ = score_song({"energy": 0.4}, make_song(energy=0.45))
+    loud, _ = score_song({"energy": 0.4}, make_song(energy=0.95))
+    assert close > loud
+
+
+def test_genre_outweighs_mood():
+    genre_only, _ = score_song(POP_FAN, make_song(mood="sad"))
+    mood_only, _ = score_song(POP_FAN, make_song(genre="rock"))
+    assert genre_only > mood_only
+
+
+def test_recommend_songs_is_sorted_and_limited_to_k():
+    songs = load_songs("data/songs.csv")
+    results = recommend_songs(POP_FAN, songs, k=3)
+    scores = [score for _, score, _ in results]
+    assert len(results) == 3
+    assert scores == sorted(scores, reverse=True)
+    assert results[0][0]["title"] == "Sunrise City"
+
+
+def test_custom_weights_change_the_score():
+    base, _ = score_song(POP_FAN, make_song())
+    shifted, _ = score_song(POP_FAN, make_song(), weights={"genre": 1.0, "energy": 3.0})
+    assert shifted == 5.0 and base == 4.5
