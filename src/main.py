@@ -48,7 +48,7 @@ def print_recommendations(name: str, user_prefs: dict, recommendations: list) ->
         for rank, (song, score, explanation) in enumerate(recommendations, start=1)
     ]
     headers = ["#", "Title", "Artist", "Genre", "Score", "Reasons"]
-    print(tabulate(rows, headers=headers, tablefmt="grid"))
+    print(tabulate(rows, headers=headers, tablefmt="grid", disable_numparse=True))
 
 
 def run_experiment(songs: list, k: int) -> None:
