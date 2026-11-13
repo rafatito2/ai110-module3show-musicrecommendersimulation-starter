@@ -1,10 +1,27 @@
 """
 Command line runner for the Music Recommender Simulation.
 
-Run it from the project root with:  python -m src.main
+Run it from the project root with:
+
+    python -m src.main                 # all profiles
+    python -m src.main --experiment    # weight-shift experiment
 """
 
+import argparse
+
 from src.recommender import load_songs, recommend_songs
+
+# Three everyday listeners plus two profiles built to trick the scoring.
+PROFILES = {
+    "High-Energy Pop": {"genre": "pop", "mood": "happy", "energy": 0.85},
+    "Chill Lofi": {"genre": "lofi", "mood": "chill", "energy": 0.35, "likes_acoustic": True},
+    "Deep Intense Rock": {"genre": "rock", "mood": "intense", "energy": 0.95},
+    "Adversarial: Sad but Hyper": {"genre": "blues", "mood": "sad", "energy": 0.95},
+    "Adversarial: Ghost Genre": {"genre": "k-pop", "mood": "happy", "energy": 0.5},
+}
+
+# Experiment from Phase 4: double the importance of energy, halve genre.
+EXPERIMENT_WEIGHTS = {"genre": 1.0, "energy": 3.0}
 
 
 def print_recommendations(name: str, user_prefs: dict, recommendations: list) -> None:
@@ -17,15 +34,33 @@ def print_recommendations(name: str, user_prefs: dict, recommendations: list) ->
             print(f"     - {reason}")
 
 
+def run_experiment(songs: list, k: int) -> None:
+    """Shows the same profile before and after the weight shift."""
+    name = "High-Energy Pop"
+    prefs = PROFILES[name]
+    print_recommendations(f"{name} (baseline weights)", prefs, recommend_songs(prefs, songs, k))
+    print_recommendations(
+        f"{name} (experiment: genre 1.0, energy 3.0)",
+        prefs,
+        recommend_songs(prefs, songs, k, weights=EXPERIMENT_WEIGHTS),
+    )
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Music Recommender Simulation")
+    parser.add_argument("-k", type=int, default=5, help="how many songs to recommend")
+    parser.add_argument("--experiment", action="store_true", help="run the weight-shift experiment")
+    args = parser.parse_args()
+
     songs = load_songs("data/songs.csv")
     print(f"Loaded songs: {len(songs)}")
 
-    # Starter example profile
-    user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8}
+    if args.experiment:
+        run_experiment(songs, args.k)
+        return
 
-    recommendations = recommend_songs(user_prefs, songs, k=5)
-    print_recommendations("Default Pop/Happy", user_prefs, recommendations)
+    for name, prefs in PROFILES.items():
+        print_recommendations(name, prefs, recommend_songs(prefs, songs, args.k))
 
 
 if __name__ == "__main__":
