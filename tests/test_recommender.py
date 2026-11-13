@@ -1,4 +1,7 @@
-from src.recommender import Song, UserProfile, Recommender
+from src.recommender import (
+    STRATEGIES, Recommender, Song, UserProfile, load_songs, recommend_songs, score_song,
+)
+
 
 def make_small_recommender() -> Recommender:
     songs = [
@@ -62,8 +65,6 @@ def test_explain_recommendation_returns_non_empty_string():
 
 
 # ---- Tests for the functional API used by src/main.py ----
-
-from src.recommender import load_songs, recommend_songs, score_song
 
 POP_FAN = {"genre": "pop", "mood": "happy", "energy": 0.8}
 
@@ -142,9 +143,6 @@ def test_shared_mood_tags_and_decade_add_points():
 
 
 # ---- Ranking strategies ----
-
-from src.recommender import STRATEGIES
-
 
 def test_balanced_strategy_matches_default_scoring():
     songs = load_songs("data/songs.csv")

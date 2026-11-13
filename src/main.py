@@ -11,6 +11,8 @@ Run it from the project root with:
 
 import argparse
 
+from tabulate import tabulate
+
 from src.recommender import STRATEGIES, load_songs, recommend_songs
 
 # Three everyday listeners plus two profiles built to trick the scoring.
@@ -37,13 +39,16 @@ EXPERIMENT_WEIGHTS = {"genre": 1.0, "energy": 3.0}
 
 
 def print_recommendations(name: str, user_prefs: dict, recommendations: list) -> None:
-    """Prints one profile's ranked recommendations with score and reasons."""
+    """Prints one profile's ranked recommendations as a table with score and reasons."""
     print(f"\n=== {name} ===")
-    print(f"Profile: {user_prefs}\n")
-    for rank, (song, score, explanation) in enumerate(recommendations, start=1):
-        print(f"{rank}. {song['title']} by {song['artist']} - Score: {score:.2f}")
-        for reason in explanation.split("; "):
-            print(f"     - {reason}")
+    print(f"Profile: {user_prefs}")
+    rows = [
+        [rank, song["title"], song["artist"], song["genre"], f"{score:.2f}",
+         "\n".join(explanation.split("; "))]
+        for rank, (song, score, explanation) in enumerate(recommendations, start=1)
+    ]
+    headers = ["#", "Title", "Artist", "Genre", "Score", "Reasons"]
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
 
 
 def run_experiment(songs: list, k: int) -> None:

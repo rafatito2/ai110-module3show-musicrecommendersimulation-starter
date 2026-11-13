@@ -105,10 +105,10 @@ def load_songs(csv_path: str) -> List[Dict]:
     songs: List[Dict] = []
     with open(csv_path, newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
-            for field in INT_FIELDS & row.keys():
-                row[field] = int(row[field])
-            for field in FLOAT_FIELDS & row.keys():
-                row[field] = float(row[field])
+            for column in INT_FIELDS & row.keys():
+                row[column] = int(row[column])
+            for column in FLOAT_FIELDS & row.keys():
+                row[column] = float(row[column])
             if "mood_tags" in row:
                 row["mood_tags"] = [tag for tag in row["mood_tags"].split("|") if tag]
             if "explicit" in row:
@@ -258,7 +258,7 @@ GENRE_PENALTY = 0.75
 
 
 def diversify(ranked: List[Tuple[Dict, float, str]], k: int) -> List[Tuple[Dict, float, str]]:
-    """Picks the top k one at a time, lowering a song's score for each repeat of an artist or genre already picked."""
+    """Picks the top k one at a time, penalizing repeats of an artist or genre already picked."""
     remaining = list(ranked)
     picked: List[Tuple[Dict, float, str]] = []
 
