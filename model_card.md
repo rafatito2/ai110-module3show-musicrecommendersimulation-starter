@@ -37,7 +37,7 @@ Changes from the starter: the starter returned the first songs in the file with 
 
 - 20 songs in `data/songs.csv`: the 10 from the starter plus 10 I added.
 - 17 genres. Lofi has 3 songs, pop has 2, and the other 15 have 1 each.
-- 14 moods. Chill has 3 songs; happy, intense and relaxed have 2 each.
+- 15 moods. Chill has 3 songs; happy, intense and relaxed have 2 each.
 - 15 columns per song. I added `popularity`, `release_decade`, `mood_tags`, `instrumentalness` and `explicit`.
 - All songs are made up. The numbers were assigned by hand, not measured from audio.
 - Missing: lyrics, language, listening history, skips, and most of the world's genres.
