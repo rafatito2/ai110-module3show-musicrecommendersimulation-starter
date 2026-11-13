@@ -117,3 +117,25 @@ def test_custom_weights_change_the_score():
     base, _ = score_song(POP_FAN, make_song())
     shifted, _ = score_song(POP_FAN, make_song(), weights={"genre": 1.0, "energy": 3.0})
     assert shifted == 5.0 and base == 4.5
+
+
+# ---- Advanced attributes ----
+
+def test_base_profile_ignores_advanced_attributes():
+    plain, _ = score_song(POP_FAN, make_song())
+    rich, _ = score_song(POP_FAN, make_song(popularity=99, explicit=True, release_decade=1980))
+    assert plain == rich
+
+
+def test_explicit_song_is_penalized_when_not_allowed():
+    prefs = {**POP_FAN, "allow_explicit": False}
+    clean, _ = score_song(prefs, make_song(explicit=False))
+    explicit, reasons = score_song(prefs, make_song(explicit=True))
+    assert clean - explicit == 2.0
+    assert any("explicit" in r for r in reasons)
+
+
+def test_shared_mood_tags_and_decade_add_points():
+    prefs = {**POP_FAN, "mood_tags": ["warm", "nostalgic"], "favorite_decade": 1990}
+    score, _ = score_song(prefs, make_song(mood_tags=["warm", "nostalgic"], release_decade=1990))
+    assert score == 4.5 + 1.0 + 0.5

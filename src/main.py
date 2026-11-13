@@ -18,6 +18,16 @@ PROFILES = {
     "Deep Intense Rock": {"genre": "rock", "mood": "intense", "energy": 0.95},
     "Adversarial: Sad but Hyper": {"genre": "blues", "mood": "sad", "energy": 0.95},
     "Adversarial: Ghost Genre": {"genre": "k-pop", "mood": "happy", "energy": 0.5},
+    # Profiles that use the advanced song attributes.
+    "Focus Session": {
+        "genre": "lofi", "mood": "focused", "energy": 0.4,
+        "target_instrumentalness": 0.9, "mood_tags": ["mellow", "steady"],
+        "favorite_decade": 2020, "prefers_popular": False,
+    },
+    "Clean Workout": {
+        "genre": "pop", "mood": "intense", "energy": 0.9,
+        "allow_explicit": False, "prefers_popular": True,
+    },
 }
 
 # Experiment from Phase 4: double the importance of energy, halve genre.
